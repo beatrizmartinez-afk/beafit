@@ -27,6 +27,13 @@
   #app .streakbar { display: flex; gap: 10px; margin-top: 14px; }
   #app .chip { flex: 1; background: rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; text-align: center; }
   #app .chip .n { font-size: 24px; font-weight: 800; line-height: 1; }
+  #app .wk { display: flex; gap: 6px; margin-top: 12px; }
+  #app .wd { flex: 1; border: 0; background: rgba(255,255,255,.14); color: #fff; border-radius: 12px; padding: 7px 0 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; font: inherit; cursor: pointer; }
+  #app .wd:disabled { opacity: .35; cursor: default; }
+  #app .wd.today { outline: 2px solid rgba(255,255,255,.7); }
+  #app .wd.on { background: #fff; color: #14807a; }
+  #app .wd .wn { font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+  #app .wd .wdot { font-size: 13px; font-weight: 800; height: 15px; line-height: 15px; }
   #app .chip .l { font-size: 11px; opacity: .85; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
   #app main { padding: 16px 14px; }
   #app .card { background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 2px 14px rgba(90,70,40,.07); margin-bottom: 14px; }
@@ -118,8 +125,11 @@
   let tab = 'hoy';
   let viewLetter = null;
 
-  const todayStr = () => new Date().toISOString().slice(0, 10);
-  function daysSince(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000); }
+  const fmtLocal = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = () => fmtLocal(new Date());
+  // suma n días a una fecha 'YYYY-MM-DD' (aritmética en UTC sobre la cadena, independiente de la zona horaria)
+  const addDays = (str, n) => new Date(new Date(str + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
+  function daysSince(a, b) { return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000); }
   function weekNumber() {
     if (!state.history.length) return 1;
     const first = state.history.map(h => h.date).sort()[0];
@@ -128,15 +138,28 @@
   function streak() {
     const dates = new Set(state.history.map(h => h.date));
     let s = 0, d = todayStr();
-    if (!dates.has(d)) d = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    while (dates.has(d)) { s++; d = new Date(new Date(d) - 86400000).toISOString().slice(0, 10); }
+    if (!dates.has(d)) d = addDays(d, -1);
+    while (dates.has(d)) { s++; d = addDays(d, -1); }
     return s;
   }
-  function weekCount() {
+  function mondayStr() {
     const monday = new Date(); const dow = (monday.getDay() + 6) % 7;
     monday.setDate(monday.getDate() - dow);
-    const m = monday.toISOString().slice(0, 10);
+    return fmtLocal(monday);
+  }
+  function weekCount() {
+    const m = mondayStr();
     return new Set(state.history.filter(h => h.date >= m).map(h => h.date)).size;
+  }
+  const isDone = d => state.history.some(h => h.date === d);
+  // Tira de la semana en curso (L a D): cada día se puede tocar para marcar/desmarcar
+  function weekStrip() {
+    const m = mondayStr(), t = todayStr(), names = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    return `<div class="wk">${names.map((n, i) => {
+      const d = addDays(m, i); const future = d > t;
+      return `<button class="wd ${isDone(d) ? 'on' : ''} ${d === t ? 'today' : ''}" data-d="${d}" ${future ? 'disabled' : ''}>
+        <span class="wn">${n}</span><span class="wdot">${isDone(d) ? '✓' : ''}</span></button>`;
+    }).join('')}</div>`;
   }
   const todayLetter = () => ORDER[state.rotation % 3];
   const doneToday = () => state.history.some(h => h.date === todayStr());
@@ -262,6 +285,7 @@
           <div class="chip"><div class="n">${weekCount()}</div><div class="l">Días esta sem.</div></div>
           <div class="chip"><div class="n">${weekNumber()}</div><div class="l">Semana</div></div>
         </div>
+        ${weekStrip()}
       </header>
       <main>${views[tab]()}</main>
       <nav>
@@ -279,6 +303,12 @@
     wrap.querySelectorAll('.ex').forEach(e => {
       if (e.dataset.locked) return;
       e.onclick = (ev) => { if (ev.target.closest('a')) return; const i = e.dataset.i; state.todayChecks[i] = !state.todayChecks[i]; save(); render(); };
+    });
+    wrap.querySelectorAll('.wd:not([disabled])').forEach(b => b.onclick = () => {
+      const d = b.dataset.d;
+      if (isDone(d)) state.history = state.history.filter(h => h.date !== d);
+      else state.history.push({ date: d, routine: null });
+      save(); render();
     });
     const mark = wrap.querySelector('#mark');
     if (mark) mark.onclick = () => {
