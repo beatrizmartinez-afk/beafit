@@ -1,0 +1,398 @@
+<title>BeaFit</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #f4ede1; }
+  #app, #app * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  #app {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 560px; margin: 0 auto; color: #1f2a37;
+    background: linear-gradient(180deg, #fdf6ec 0%, #f4ede1 100%);
+    min-height: 100vh; padding-bottom: 84px; position: relative;
+  }
+  #app .loading { padding: 40px; text-align: center; color: #8a7f6d; }
+  #app header {
+    padding: 20px 18px 14px; background: #14807a; color: #fff;
+    border-radius: 0 0 22px 22px;
+  }
+  #app header .t { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+  #app header .s { font-size: 13px; opacity: .82; margin-top: 3px; }
+  #app .streakbar { display: flex; gap: 10px; margin-top: 14px; }
+  #app .chip { flex: 1; background: rgba(255,255,255,.14); border-radius: 14px; padding: 10px 12px; text-align: center; }
+  #app .chip .n { font-size: 24px; font-weight: 800; line-height: 1; }
+  #app .wk { display: flex; gap: 6px; margin-top: 12px; }
+  #app .wd { flex: 1; border: 0; background: rgba(255,255,255,.14); color: #fff; border-radius: 12px; padding: 7px 0 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; font: inherit; cursor: pointer; }
+  #app .wd:disabled { opacity: .35; cursor: default; }
+  #app .wd.today { outline: 2px solid rgba(255,255,255,.7); }
+  #app .wd.on { background: #fff; color: #14807a; }
+  #app .wd .wn { font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+  #app .wd .wdot { font-size: 13px; font-weight: 800; height: 15px; line-height: 15px; }
+  #app .cloud { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 11px; opacity: .85; }
+  #app .cloud i { width: 7px; height: 7px; border-radius: 50%; background: #ffd166; display: inline-block; }
+  #app .cloud.ok i { background: #7fe0c9; }
+  #app .cloud.off i { background: #ff8a80; }
+  #app .chip .l { font-size: 11px; opacity: .85; margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  #app main { padding: 16px 14px; }
+  #app .card { background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 2px 14px rgba(90,70,40,.07); margin-bottom: 14px; }
+  #app .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: #14807a; margin-bottom: 12px; }
+  #app .picker { display: flex; gap: 8px; margin-bottom: 14px; }
+  #app .picker button { flex: 1; padding: 10px; border: 1.5px solid #d8cdb8; background: #fff; border-radius: 12px; font-weight: 800; font-size: 16px; color: #8a7f6d; cursor: pointer; }
+  #app .picker button.psel { background: #14807a; border-color: #14807a; color: #fff; }
+  #app .routine-tag { display: inline-block; background: #fbe9d7; color: #c2591b; font-weight: 700; font-size: 13px; padding: 4px 12px; border-radius: 999px; margin-bottom: 4px; }
+  #app .routine-name { font-size: 19px; font-weight: 700; margin: 6px 0 14px; }
+  #app .ex { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-top: 1px solid #f0ebe1; cursor: pointer; }
+  #app .ex:first-of-type { border-top: none; }
+  #app .box { width: 26px; height: 26px; border-radius: 8px; border: 2px solid #cbb89a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: .15s; margin-top: 1px; }
+  #app .ex.done .box { background: #14807a; border-color: #14807a; }
+  #app .box svg { width: 15px; height: 15px; opacity: 0; transition: .15s; }
+  #app .ex.done .box svg { opacity: 1; }
+  #app .ex.done .exn { color: #9aa; text-decoration: line-through; }
+  #app .exn { font-size: 15px; font-weight: 600; }
+  #app .exr { font-size: 13px; color: #14807a; font-weight: 600; }
+  #app .exc { font-size: 12.5px; color: #7d7365; margin-top: 2px; line-height: 1.35; }
+  #app .vidlink { display: inline-block; margin-top: 6px; font-size: 13px; color: #c2591b; font-weight: 700; text-decoration: none; }
+  #app .locked { opacity: .5; }
+  #app .locked .lockmsg { font-size: 12px; color: #c2591b; font-weight: 600; margin-top: 2px; }
+  #app .bigbtn { width: 100%; padding: 15px; border: none; border-radius: 14px; background: #14807a; color: #fff; font-size: 16px; font-weight: 700; margin-top: 8px; cursor: pointer; transition: .15s; }
+  #app .bigbtn:active { transform: scale(.98); }
+  #app .bigbtn.done { background: #e8f3ef; color: #14807a; }
+  #app table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  #app td { padding: 9px 4px; border-top: 1px solid #f0ebe1; vertical-align: top; }
+  #app tr:first-child td { border-top: none; }
+  #app .day { font-weight: 700; color: #14807a; white-space: nowrap; }
+  #app .phase { background: #fbe9d7; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  #app .phase .p { font-weight: 700; color: #c2591b; }
+  #app .phase .d { font-size: 13px; color: #7d5a3a; margin-top: 3px; }
+  #app .rule { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid #f0ebe1; font-size: 14px; line-height: 1.4; }
+  #app .rule:first-child { border-top: none; }
+  #app .rule .em { font-size: 17px; }
+  #app .no { color: #b23b3b; } #app .yes { color: #14807a; }
+  #app .vid { display: block; padding: 10px 0; border-top: 1px solid #f0ebe1; font-size: 14px; color: #14807a; text-decoration: none; font-weight: 600; }
+  #app .vid:first-of-type { border-top: none; }
+  #app .vid span { color: #7d7365; font-weight: 400; }
+  #app .testrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #f0ebe1; }
+  #app .testrow:first-of-type { border-top: none; }
+  #app .testrow label { flex: 1; font-size: 14px; font-weight: 600; }
+  #app .testrow input { width: 62px; padding: 8px; border: 1.5px solid #d8cdb8; border-radius: 10px; font-size: 15px; text-align: center; }
+  #app .tcol { font-size: 11px; color: #8a7f6d; text-align: center; width: 62px; }
+  #app .thead { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 2px; }
+  #app nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; display: flex; background: #fff; border-top: 1px solid #eee; box-shadow: 0 -2px 12px rgba(0,0,0,.05); }
+  #app nav button { flex: 1; border: none; background: none; padding: 10px 4px 12px; font-size: 11px; color: #9a9285; cursor: pointer; font-weight: 600; }
+  #app nav button.active { color: #14807a; }
+  #app nav button .ic { display: block; font-size: 20px; margin-bottom: 2px; }
+  #app .hide { display: none; }
+  #app .note { font-size: 12px; color: #8a7f6d; line-height: 1.4; margin-top: 10px; }
+</style>
+<div id="app"><div class="loading">Cargando…</div></div>
+<script>
+(function () {
+  const KEY = 'beafit_v1';
+  const wrap = document.getElementById('app');
+  const VEST = 'https://www.youtube.com/watch?v=351wtF9ntAY';
+
+  const ROUTINES = {
+    A: { name: 'Core base + glúteo', ex: [
+      { n: 'Respiración diafragmática + transverso', r: '5 resp.', c: 'Sopla y mete el ombligo. Calienta tu faja natural.', v: 'https://www.youtube.com/watch?v=2adOhKSDG_c' },
+      { n: 'Dead bug adaptado', r: '8 / lado', c: 'Baja brazo y pierna contrarios. La lumbar NO se despega del suelo.', v: 'https://www.youtube.com/results?search_query=dead+bug+ejercicio+t%C3%A9cnica' },
+      { n: 'Bird dog', r: '8 / lado', c: 'Cuadrupedia, estira brazo y pierna contrarios sin girar la cadera.', v: 'https://www.youtube.com/results?search_query=bird+dog+ejercicio+core' },
+      { n: 'Puente de glúteo con banda', r: '12–15', c: 'Banda sobre rodillas, empújalas hacia fuera. Aprieta arriba.', v: 'https://www.youtube.com/results?search_query=puente+de+gl%C3%BAteo+con+banda+el%C3%A1stica' },
+      { n: 'Almeja (clam) con banda', r: '12 / lado', c: 'De lado, abre la rodilla contra la banda sin girar la cadera.', v: 'https://www.youtube.com/results?search_query=clam+shell+almeja+gl%C3%BAteo+banda' },
+      { n: 'Estiramiento de cierre', r: 'sigue el vídeo', c: 'Cierre del día. Respira y no rebotes.', v: VEST },
+    ]},
+    B: { name: 'Fuerza glúteo / pierna', ex: [
+      { n: 'Sentadilla goblet (kettlebell)', r: '3×10', c: 'Pecho arriba, rodillas hacia la punta del pie, sopla al subir.', v: 'https://www.youtube.com/results?search_query=sentadilla+goblet+t%C3%A9cnica' },
+      { n: 'Peso muerto rumano a una pierna', r: '3×8 / pierna', c: 'Bisagra de cadera, espalda recta. Notas el isquio-glúteo.', v: 'https://www.youtube.com/results?search_query=peso+muerto+rumano+a+una+pierna+t%C3%A9cnica' },
+      { n: 'Hip thrust en el suelo con banda', r: '3×15', c: 'Espalda en sofá para más rango. Empuje explosivo, pausa arriba.', v: 'https://www.youtube.com/watch?v=LWj9YiMWJk0' },
+      { n: 'Monster walk con banda', r: '10 ida/vuelta', c: 'Semisentadilla, pasos laterales sin juntar rodillas.', v: 'https://www.youtube.com/results?search_query=monster+walk+banda+gl%C3%BAteo' },
+      { n: 'Estiramiento de cierre', r: 'sigue el vídeo', c: 'Cierre del día. Respira y no rebotes.', v: VEST },
+    ]},
+    C: { name: 'Comba + core + movilidad', ex: [
+      { n: 'Comba', r: '5 × 45"', c: 'Descanso 30". Tu cardio de bolsillo.', v: 'https://www.youtube.com/results?search_query=t%C3%A9cnica+saltar+a+la+comba+principiante' },
+      { n: 'Plancha lateral', r: '20–30" / lado', c: 'Sube caderas, línea recta.', lock: 3, lockmsg: '🔒 Se desbloquea en la semana 3 (y solo si no hay pico).', v: 'https://www.youtube.com/results?search_query=plancha+lateral+t%C3%A9cnica' },
+      { n: 'Bird dog', r: '10 / lado', c: '', v: 'https://www.youtube.com/results?search_query=bird+dog+ejercicio+core' },
+      { n: 'Movilidad de cadera (con strap)', r: '5 min', c: 'Estira flexor, isquio y glúteo. Cierre del día.', v: 'https://www.youtube.com/results?search_query=movilidad+de+cadera+estiramientos+con+correa' },
+      { n: 'Estiramiento de cierre', r: 'sigue el vídeo', c: 'Cierre del día. Respira y no rebotes.', v: VEST },
+    ]},
+  };
+  const ORDER = ['A', 'B', 'C'];
+
+  let state = { history: [], rotation: 0, tests: { baseline: {}, current: {} }, todayChecks: {}, todayDate: '', updatedAt: 0 };
+  let syncState = { cls: '', txt: 'Conectando con la nube…' };
+  let tab = 'hoy';
+  let viewLetter = null;
+
+  const fmtLocal = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayStr = () => fmtLocal(new Date());
+  // suma n días a una fecha 'YYYY-MM-DD' (aritmética en UTC sobre la cadena, independiente de la zona horaria)
+  const addDays = (str, n) => new Date(new Date(str + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
+  function daysSince(a, b) { return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000); }
+  function weekNumber() {
+    if (!state.history.length) return 1;
+    const first = state.history.map(h => h.date).sort()[0];
+    return Math.floor(daysSince(first, todayStr()) / 7) + 1;
+  }
+  function streak() {
+    const dates = new Set(state.history.map(h => h.date));
+    let s = 0, d = todayStr();
+    if (!dates.has(d)) d = addDays(d, -1);
+    while (dates.has(d)) { s++; d = addDays(d, -1); }
+    return s;
+  }
+  function mondayStr() {
+    const monday = new Date(); const dow = (monday.getDay() + 6) % 7;
+    monday.setDate(monday.getDate() - dow);
+    return fmtLocal(monday);
+  }
+  function weekCount() {
+    const m = mondayStr();
+    return new Set(state.history.filter(h => h.date >= m).map(h => h.date)).size;
+  }
+  const isDone = d => state.history.some(h => h.date === d);
+  // Tira de la semana en curso (L a D): cada día se puede tocar para marcar/desmarcar
+  function weekStrip() {
+    const m = mondayStr(), t = todayStr(), names = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    return `<div class="wk">${names.map((n, i) => {
+      const d = addDays(m, i); const future = d > t;
+      return `<button class="wd ${isDone(d) ? 'on' : ''} ${d === t ? 'today' : ''}" data-d="${d}" ${future ? 'disabled' : ''}>
+        <span class="wn">${n}</span><span class="wdot">${isDone(d) ? '✓' : ''}</span></button>`;
+    }).join('')}</div>`;
+  }
+  const todayLetter = () => ORDER[state.rotation % 3];
+  const doneToday = () => state.history.some(h => h.date === todayStr());
+
+  function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function save() { state.updatedAt = Date.now(); saveLocal(); pushCloud(); }
+  function normalize() {
+    state.history = Array.isArray(state.history) ? state.history : [];
+    state.tests = state.tests || { baseline: {}, current: {} };
+    state.tests.baseline = state.tests.baseline || {}; state.tests.current = state.tests.current || {};
+    if (state.todayDate !== todayStr()) { state.todayChecks = {}; state.todayDate = todayStr(); }
+  }
+  function load() {
+    try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+    normalize();
+  }
+
+  // ---------- Sincronización entre dispositivos (base de datos del artefacto) ----------
+  const DOC_PATH = 'beafit/state';
+  let cloudDoc = null, lastPushed = '', pushing = false, pushDirty = false, pushTimer = null;
+  // serialización canónica (claves ordenadas) para comparar local y remoto sin depender del orden
+  const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
+    : (v && typeof v === 'object') ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
+    : JSON.stringify(v);
+  const pick = s => ({ history: s.history, rotation: s.rotation, tests: s.tests, todayChecks: s.todayChecks, todayDate: s.todayDate, updatedAt: s.updatedAt });
+  const snapshotOf = s => canon(pick(s));
+  function setSync(cls, txt) {
+    syncState = { cls, txt };
+    const el = wrap.querySelector('.cloud'); if (el) { el.className = 'cloud ' + cls; el.lastChild.textContent = txt; }
+  }
+  function pushCloud() {
+    if (!cloudDoc) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(async () => {
+      if (pushing) { pushDirty = true; return; }
+      pushing = true; setSync('', 'Guardando…');
+      try {
+        const body = JSON.parse(JSON.stringify(pick(state))); lastPushed = snapshotOf(state);
+        await cloudDoc.set(body); setSync('ok', 'Sincronizado');
+      } catch (e) { setSync('off', 'Sin conexión: guardado solo aquí'); }
+      pushing = false;
+      if (pushDirty) { pushDirty = false; pushCloud(); }
+    }, 300);
+  }
+  // Une lo local con lo remoto la primera vez: unión de días hechos, y el resto del más reciente
+  function merge(local, remote) {
+    const newer = (remote.updatedAt || 0) >= (local.updatedAt || 0) ? remote : local;
+    const byDate = new Map();
+    (local.history || []).forEach(h => byDate.set(h.date, h));
+    (remote.history || []).forEach(h => byDate.set(h.date, h));
+    const tests = newer.tests && (Object.keys(newer.tests.baseline || {}).length || Object.keys(newer.tests.current || {}).length)
+      ? newer.tests : (newer === remote ? local.tests : remote.tests);
+    return { history: [...byDate.values()].sort((a, b) => a.date < b.date ? -1 : 1), rotation: newer.rotation || 0,
+      tests: tests || { baseline: {}, current: {} }, todayChecks: newer.todayChecks || {}, todayDate: newer.todayDate || '',
+      updatedAt: Math.max(local.updatedAt || 0, remote.updatedAt || 0) };
+  }
+  async function initCloud() {
+    let db = null;
+    try { db = (window.claude && window.claude.use) ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { setSync('off', 'Solo en este dispositivo'); return; }
+    cloudDoc = db.doc(DOC_PATH);
+    let first = true;
+    cloudDoc.onSnapshot(snap => {
+      if (snap.metadata && snap.metadata.hasPendingWrites) return;
+      if (!snap.exists) { if (first) { first = false; if (state.history.length || state.updatedAt) pushCloud(); else setSync('ok', 'Sincronizado'); } return; }
+      const remote = snap.data(); const raw = canon(remote);
+      if (raw === lastPushed) { first = false; setSync('ok', 'Sincronizado'); return; }
+      if (first) {
+        first = false;
+        state = Object.assign(state, merge(state, remote)); normalize(); saveLocal(); render();
+        if (snapshotOf(state) !== raw) pushCloud(); else setSync('ok', 'Sincronizado');
+      } else {
+        state = Object.assign(state, remote); normalize(); saveLocal(); render(); setSync('ok', 'Sincronizado');
+      }
+    }, () => setSync('off', 'Sin conexión: guardado solo aquí'));
+  }
+
+  const check = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="M5 13l4 4L19 7"/></svg>';
+
+  function viewHoy() {
+    const L = viewLetter || todayLetter(); const R = ROUTINES[L]; const wk = weekNumber(); const done = doneToday();
+    const exHtml = R.ex.map((e, i) => {
+      const locked = e.lock && wk < e.lock;
+      const checked = state.todayChecks[i];
+      return `<div class="ex ${checked ? 'done' : ''} ${locked ? 'locked' : ''}" data-i="${i}" ${locked ? 'data-locked="1"' : ''}>
+        <div class="box">${check}</div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;gap:8px"><span class="exn">${e.n}</span><span class="exr">${e.r}</span></div>
+          ${e.c ? `<div class="exc">${e.c}</div>` : ''}
+          ${locked ? `<div class="lockmsg">${e.lockmsg}</div>` : ''}
+          ${e.v ? `<a class="vidlink" href="${e.v}" target="_blank" rel="noopener">▶ ver cómo se hace</a>` : ''}
+        </div></div>`;
+    }).join('');
+    return `
+      <div class="card">
+        <div style="font-size:12px;color:#8a7f6d;margin-bottom:7px">Elige tu rutina de hoy</div>
+        <div class="picker">
+          <button data-p="A" class="${L==='A'?'psel':''}">A</button>
+          <button data-p="B" class="${L==='B'?'psel':''}">B</button>
+          <button data-p="C" class="${L==='C'?'psel':''}">C</button>
+        </div>
+        <div class="routine-tag">Rutina ${L}</div>
+        <div class="routine-name">${R.name}</div>
+        <div style="font-size:13px;color:#8a7f6d;margin-bottom:8px">2–3 vueltas · al levantarte, mientras desayunan los niños</div>
+        ${exHtml}
+        ${done
+          ? `<button class="bigbtn done" id="undo">✓ Hecho hoy · racha ${streak()} 🔥 · toca para deshacer</button>`
+          : `<button class="bigbtn" id="mark">Marcar día como hecho ✓</button>`}
+        <div class="note">Día flojo = solo esto (15 min). Nunca cero. Si en algún ejercicio ves el <b>pico</b> abdominal, párate ahí.</div>
+      </div>`;
+  }
+
+  function viewSemana() {
+    const wk = weekNumber();
+    let phase = { p: 'Semanas 1–2 · Aprender técnica', d: 'Carga ligera, prioriza la ejecución. Plancha lateral aún bloqueada.' };
+    if (wk >= 5) phase = { p: 'Semanas 5–6 · Subir intensidad', d: 'Kettlebell donde puedas, pausas arriba, más trabajo a una pierna.' };
+    else if (wk >= 3) phase = { p: 'Semanas 3–4 · Subir volumen', d: '+2–3 reps o banda más fuerte. Plancha lateral desbloqueada si no hay pico.' };
+    return `
+      <div class="phase"><div class="p">Estás en la ${phase.p.split('·')[0].trim()} (semana ${wk})</div><div class="d">${phase.d}</div></div>
+      <div class="card"><h2>Estructura semanal</h2>
+        <table>
+          <tr><td class="day">Cada día</td><td>Rutina A→B→C (15 min, casa)</td></tr>
+          <tr><td class="day">2×/sem</td><td>Playa: carrera + sprints en arena/dunas + circuito de pierna (búlgara, step-up, hip thrust en banco, sentadilla con banda). 30 min. En días de correr NO sumas los 15 de casa.</td></tr>
+          <tr><td class="day">Finde</td><td>Cardio largo con los niños: correr (ellos en bici), patinar, o barras mientras juegan. 40–60 min.</td></tr>
+        </table>
+      </div>
+      <div class="card"><h2>Playa · el circuito</h2>
+        <div class="exc" style="line-height:1.6">
+          1. Calentar 5' + puentes + monster walks.<br>
+          2. <b>6–8 sprints</b> en arena o cuesta de duna (~20–30 m, vuelta andando).<br>
+          3. Circuito ×2–3: búlgara 8/pierna · step-up 10/pierna · hip thrust en banco 15 · sentadilla con banda 15.<br>
+          4. Trote suave 5' + estirar.<br><br>
+          <span style="color:#c2591b;font-weight:600">Del parque de la playa: ignora pared sueca, escalas, barras y paralelas (todo eso es tren superior). Úsalo solo como estructura para hip thrust, step-ups y búlgaras.</span>
+        </div>
+      </div>`;
+  }
+
+  function viewTests() {
+    const b = state.tests.baseline || {}, c = state.tests.current || {};
+    const fields = [
+      ['sprints', 'Sprints en arena (6 min)'],
+      ['bulgaras', 'Búlgaras limpias / pierna'],
+      ['plancha', 'Plancha lateral (seg/lado)'],
+      ['diastasis', 'Diástasis (dedos, ombligo)'],
+    ];
+    const rows = fields.map(([k, l]) => `
+      <div class="testrow">
+        <label>${l}</label>
+        <input type="number" data-t="baseline" data-k="${k}" value="${b[k] ?? ''}" placeholder="—">
+        <input type="number" data-t="current" data-k="${k}" value="${c[k] ?? ''}" placeholder="—">
+      </div>`).join('');
+    return `
+      <div class="card"><h2>Tests · tu marcador</h2>
+        <div class="thead"><div class="tcol">Semana 1</div><div class="tcol">Ahora</div></div>
+        ${rows}
+        <button class="bigbtn" id="savetests" style="margin-top:14px">Guardar tests</button>
+        <div class="note">Apunta la columna "Semana 1" el primer día. Repite en la semana 6. Ver el progreso es lo que te mantiene enganchada.</div>
+      </div>`;
+  }
+
+  function viewGuia() {
+    return `
+      <div class="card"><h2>Reglas de oro · diástasis</h2>
+        <div class="rule"><span class="em">💨</span><div><b>Exhala en el esfuerzo.</b> Sopla al subir/empujar. Nunca aguantes el aire.</div></div>
+        <div class="rule"><span class="em">🎯</span><div><b>Costillas abajo + ombligo dentro</b> antes de cada repetición.</div></div>
+        <div class="rule"><span class="em">⛰️</span><div><b>Regla del pico:</b> si el centro se abomba en cresta → para ese ejercicio.</div></div>
+        <div class="rule"><span class="em">⬇️</span><div>Si notas presión o peso hacia el suelo pélvico → para.</div></div>
+        <div class="rule no"><span class="em">🚫</span><div><b>Prohibido:</b> crunch, sit-up, banco abdominal nº8 de la playa, elevar las dos piernas tumbada, plancha frontal larga mal hecha.</div></div>
+        <div class="rule yes"><span class="em">✅</span><div><b>Sí:</b> transverso, dead bug, bird dog, puente/hip thrust, plancha lateral (semana 3+), y todo glúteo y pierna.</div></div>
+      </div>
+      <div class="card"><h2>Cómo se hace cada ejercicio</h2>
+        <div class="note" style="margin:0 0 8px">Cada ejercicio de "Hoy" tiene su "▶ ver". Fíjate en la respiración y en que no haya pico.</div>
+        <a class="vid" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=2adOhKSDG_c">▶ Respiración diafragmática <span>· vídeo</span></a>
+        <a class="vid" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=LWj9YiMWJk0">▶ Hip thrust con banda <span>· vídeo</span></a>
+        <a class="vid" target="_blank" rel="noopener" href="${VEST}">▶ Estiramiento de cierre <span>· vídeo</span></a>
+      </div>
+      <div class="card">
+        <div class="note" style="margin:0">Voy conservadora con el abdomen porque vi coning. Una valoración de fisio de suelo pélvico (con ecografía) es la mejor inversión de tiempo aquí. Si te pauta otra cosa, gana el fisio.</div>
+      </div>`;
+  }
+
+  function render() {
+    const views = { hoy: viewHoy, semana: viewSemana, tests: viewTests, guia: viewGuia };
+    wrap.innerHTML = `
+      <header>
+        <div class="t">BeaFit</div>
+        <div class="s">Glúteo · pierna · core seguro</div>
+        <div class="streakbar">
+          <div class="chip"><div class="n">${streak()}</div><div class="l">Racha 🔥</div></div>
+          <div class="chip"><div class="n">${weekCount()}</div><div class="l">Días esta sem.</div></div>
+          <div class="chip"><div class="n">${weekNumber()}</div><div class="l">Semana</div></div>
+        </div>
+        ${weekStrip()}
+        <div class="cloud ${syncState.cls}"><i></i>${syncState.txt}</div>
+      </header>
+      <main>${views[tab]()}</main>
+      <nav>
+        <button data-tab="hoy" class="${tab==='hoy'?'active':''}"><span class="ic">📋</span>Hoy</button>
+        <button data-tab="semana" class="${tab==='semana'?'active':''}"><span class="ic">🗓️</span>Semana</button>
+        <button data-tab="tests" class="${tab==='tests'?'active':''}"><span class="ic">📈</span>Tests</button>
+        <button data-tab="guia" class="${tab==='guia'?'active':''}"><span class="ic">📖</span>Guía</button>
+      </nav>`;
+    bind();
+  }
+
+  function bind() {
+    wrap.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+    wrap.querySelectorAll('.picker button').forEach(b => b.onclick = () => { viewLetter = b.dataset.p; render(); });
+    wrap.querySelectorAll('.ex').forEach(e => {
+      if (e.dataset.locked) return;
+      e.onclick = (ev) => { if (ev.target.closest('a')) return; const i = e.dataset.i; state.todayChecks[i] = !state.todayChecks[i]; save(); render(); };
+    });
+    wrap.querySelectorAll('.wd:not([disabled])').forEach(b => b.onclick = () => {
+      const d = b.dataset.d;
+      if (isDone(d)) state.history = state.history.filter(h => h.date !== d);
+      else state.history.push({ date: d, routine: null });
+      save(); render();
+    });
+    const mark = wrap.querySelector('#mark');
+    if (mark) mark.onclick = () => {
+      state.history.push({ date: todayStr(), routine: (viewLetter || todayLetter()) });
+      state.rotation = (state.rotation + 1) % 3; viewLetter = null; save(); render();
+    };
+    const undo = wrap.querySelector('#undo');
+    if (undo) undo.onclick = () => {
+      state.history = state.history.filter(h => h.date !== todayStr());
+      state.rotation = (state.rotation + 2) % 3; save(); render();
+    };
+    const st = wrap.querySelector('#savetests');
+    if (st) st.onclick = () => {
+      wrap.querySelectorAll('input[data-t]').forEach(inp => {
+        const t = inp.dataset.t, k = inp.dataset.k;
+        state.tests[t] = state.tests[t] || {};
+        if (inp.value !== '') state.tests[t][k] = Number(inp.value); else delete state.tests[t][k];
+      });
+      save(); st.textContent = 'Guardado ✓'; setTimeout(() => st.textContent = 'Guardar tests', 1400);
+    };
+  }
+
+  load(); render(); initCloud();
+})();
+</script>
